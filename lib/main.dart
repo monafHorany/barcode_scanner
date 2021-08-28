@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
+import 'package:http/http.dart';
+import 'dart:convert';
 
 void main() => runApp(MyApp());
 
@@ -21,7 +23,7 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> startBarcodeScanStream() async {
     FlutterBarcodeScanner.getBarcodeStreamReceiver(
-        '#ff6666', 'Cancel', true, ScanMode.BARCODE)
+            '#ff6666', 'Cancel', true, ScanMode.BARCODE)
         .listen((barcode) => print(barcode));
   }
 
@@ -49,11 +51,29 @@ class _MyAppState extends State<MyApp> {
   // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> scanBarcodeNormal() async {
     String barcodeScanRes;
+    Response response;
+    final url = Uri.parse('http://192.168.1.8:5000/user/create');
+    // final headers = {"Content-Type': 'application/json; charset=UTF-8"};
+    // Response response = await get(url);
+    // print('Status code: ${response.statusCode}');
+    // print('Headers: ${response.headers}');
+    // print('Body: ${response.body}');
     // Platform messages may fail, so we use a try/catch PlatformException.
     try {
       barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
           '#ff6666', 'Cancel', true, ScanMode.BARCODE);
       print(barcodeScanRes);
+      // final bodyJson = json.encode('barcodeScanRes': barcodeScanRes);
+      // print("qweqwe" + bodyJson);
+      response = await post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'barcode': barcodeScanRes,
+        }),
+      );
     } on PlatformException {
       barcodeScanRes = 'Failed to get platform version.';
     }
@@ -64,7 +84,7 @@ class _MyAppState extends State<MyApp> {
     if (!mounted) return;
 
     setState(() {
-      _scanBarcode = barcodeScanRes;
+      _scanBarcode = response.body;
     });
   }
 
